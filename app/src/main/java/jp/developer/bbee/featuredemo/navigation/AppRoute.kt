@@ -8,3 +8,9 @@ data object HomeRoute : NavKey
 
 @Serializable
 data class DetailRoute(val id: String) : NavKey
+
+@Serializable
+data object BiometricAuthRoute : NavKey
+
+@Serializable
+data object AuthenticatedRoute : NavKey

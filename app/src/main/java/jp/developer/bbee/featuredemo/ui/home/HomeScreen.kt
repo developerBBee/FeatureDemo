@@ -1,12 +1,16 @@
 package jp.developer.bbee.featuredemo.ui.home
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -30,19 +34,30 @@ class HomeViewModel @Inject constructor() : ViewModel() {
 @Composable
 fun HomeScreen(
     onItemClick: (String) -> Unit,
+    onBiometricDemoClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val items by viewModel.items.collectAsStateWithLifecycle()
 
-    LazyColumn(modifier = modifier.fillMaxSize()) {
-        items(items) { item ->
-            ListItem(
-                headlineContent = { Text(item) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = dropUnlessResumed { onItemClick(item) }),
-            )
+    Column(modifier = modifier.fillMaxSize()) {
+        Button(
+            onClick = dropUnlessResumed(block = onBiometricDemoClick),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+        ) {
+            Text("生体認証デモ")
+        }
+        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+            items(items) { item ->
+                ListItem(
+                    headlineContent = { Text(item) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = dropUnlessResumed { onItemClick(item) }),
+                )
+            }
         }
     }
 }
