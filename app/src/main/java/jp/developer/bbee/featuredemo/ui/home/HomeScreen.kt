@@ -1,0 +1,48 @@
+package jp.developer.bbee.featuredemo.ui.home
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.dropUnlessResumed
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import javax.inject.Inject
+
+@HiltViewModel
+class HomeViewModel @Inject constructor() : ViewModel() {
+
+    private val _items = MutableStateFlow((1..20).map { "Item $it" })
+    val items: StateFlow<List<String>> = _items.asStateFlow()
+}
+
+@Composable
+fun HomeScreen(
+    onItemClick: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: HomeViewModel = hiltViewModel(),
+) {
+    val items by viewModel.items.collectAsStateWithLifecycle()
+
+    LazyColumn(modifier = modifier.fillMaxSize()) {
+        items(items) { item ->
+            ListItem(
+                headlineContent = { Text(item) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = dropUnlessResumed { onItemClick(item) }),
+            )
+        }
+    }
+}
