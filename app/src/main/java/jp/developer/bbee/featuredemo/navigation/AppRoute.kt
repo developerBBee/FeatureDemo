@@ -17,3 +17,6 @@ data object AuthenticatedRoute : NavKey
 
 @Serializable
 data object IntentLauncherRoute : NavKey
+
+@Serializable
+data object BarcodeScannerRoute : NavKey

@@ -36,6 +36,7 @@ fun HomeScreen(
     onItemClick: (String) -> Unit,
     onBiometricDemoClick: () -> Unit,
     onIntentLauncherDemoClick: () -> Unit,
+    onBarcodeScannerDemoClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -54,9 +55,17 @@ fun HomeScreen(
             onClick = dropUnlessResumed(block = onIntentLauncherDemoClick),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
+                .padding(start = 16.dp, top = 8.dp, end = 16.dp),
         ) {
             Text("外部アプリ起動デモ")
+        }
+        Button(
+            onClick = dropUnlessResumed(block = onBarcodeScannerDemoClick),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
+        ) {
+            Text("バーコード読み取りデモ")
         }
         LazyColumn(modifier = Modifier.fillMaxWidth()) {
             items(items) { item ->

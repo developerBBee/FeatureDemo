@@ -19,8 +19,10 @@ import jp.developer.bbee.featuredemo.navigation.AuthenticatedRoute
 import jp.developer.bbee.featuredemo.navigation.BiometricAuthRoute
 import jp.developer.bbee.featuredemo.navigation.DetailRoute
 import jp.developer.bbee.featuredemo.navigation.HomeRoute
+import jp.developer.bbee.featuredemo.navigation.BarcodeScannerRoute
 import jp.developer.bbee.featuredemo.navigation.IntentLauncherRoute
 import jp.developer.bbee.featuredemo.ui.authenticated.AuthenticatedScreen
+import jp.developer.bbee.featuredemo.ui.barcodescanner.BarcodeScannerScreen
 import jp.developer.bbee.featuredemo.ui.biometric.BiometricAuthScreen
 import jp.developer.bbee.featuredemo.ui.detail.DetailScreen
 import jp.developer.bbee.featuredemo.ui.home.HomeScreen
@@ -65,6 +67,7 @@ private fun AppNavDisplay(modifier: Modifier = Modifier) {
                     onItemClick = { id -> backStack.add(DetailRoute(id)) },
                     onBiometricDemoClick = { backStack.add(BiometricAuthRoute) },
                     onIntentLauncherDemoClick = { backStack.add(IntentLauncherRoute) },
+                    onBarcodeScannerDemoClick = { backStack.add(BarcodeScannerRoute) },
                 )
             }
             entry<DetailRoute> { route ->
@@ -90,6 +93,9 @@ private fun AppNavDisplay(modifier: Modifier = Modifier) {
             }
             entry<IntentLauncherRoute> {
                 IntentLauncherScreen()
+            }
+            entry<BarcodeScannerRoute> {
+                BarcodeScannerScreen()
             }
         },
     )
