@@ -21,12 +21,14 @@ import jp.developer.bbee.featuredemo.navigation.DetailRoute
 import jp.developer.bbee.featuredemo.navigation.HomeRoute
 import jp.developer.bbee.featuredemo.navigation.BarcodeScannerRoute
 import jp.developer.bbee.featuredemo.navigation.IntentLauncherRoute
+import jp.developer.bbee.featuredemo.navigation.TextScannerRoute
 import jp.developer.bbee.featuredemo.ui.authenticated.AuthenticatedScreen
 import jp.developer.bbee.featuredemo.ui.barcodescanner.BarcodeScannerScreen
 import jp.developer.bbee.featuredemo.ui.biometric.BiometricAuthScreen
 import jp.developer.bbee.featuredemo.ui.detail.DetailScreen
 import jp.developer.bbee.featuredemo.ui.home.HomeScreen
 import jp.developer.bbee.featuredemo.ui.intentlauncher.IntentLauncherScreen
+import jp.developer.bbee.featuredemo.ui.textscanner.TextScannerScreen
 import jp.developer.bbee.featuredemo.ui.theme.FeatureDemoTheme
 
 // BiometricPrompt(androidx.biometric 安定版)が FragmentActivity を要求するため
@@ -68,6 +70,7 @@ private fun AppNavDisplay(modifier: Modifier = Modifier) {
                     onBiometricDemoClick = { backStack.add(BiometricAuthRoute) },
                     onIntentLauncherDemoClick = { backStack.add(IntentLauncherRoute) },
                     onBarcodeScannerDemoClick = { backStack.add(BarcodeScannerRoute) },
+                    onTextScannerDemoClick = { backStack.add(TextScannerRoute) },
                 )
             }
             entry<DetailRoute> { route ->
@@ -96,6 +99,9 @@ private fun AppNavDisplay(modifier: Modifier = Modifier) {
             }
             entry<BarcodeScannerRoute> {
                 BarcodeScannerScreen()
+            }
+            entry<TextScannerRoute> {
+                TextScannerScreen()
             }
         },
     )
