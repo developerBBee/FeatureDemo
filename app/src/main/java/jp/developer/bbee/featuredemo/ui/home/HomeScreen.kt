@@ -35,6 +35,7 @@ class HomeViewModel @Inject constructor() : ViewModel() {
 fun HomeScreen(
     onItemClick: (String) -> Unit,
     onBiometricDemoClick: () -> Unit,
+    onIntentLauncherDemoClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -45,9 +46,17 @@ fun HomeScreen(
             onClick = dropUnlessResumed(block = onBiometricDemoClick),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(start = 16.dp, top = 16.dp, end = 16.dp),
         ) {
             Text("生体認証デモ")
+        }
+        Button(
+            onClick = dropUnlessResumed(block = onIntentLauncherDemoClick),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
+        ) {
+            Text("外部アプリ起動デモ")
         }
         LazyColumn(modifier = Modifier.fillMaxWidth()) {
             items(items) { item ->

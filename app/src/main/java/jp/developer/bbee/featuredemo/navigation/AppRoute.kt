@@ -14,3 +14,6 @@ data object BiometricAuthRoute : NavKey
 
 @Serializable
 data object AuthenticatedRoute : NavKey
+
+@Serializable
+data object IntentLauncherRoute : NavKey
