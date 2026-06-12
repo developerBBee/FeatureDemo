@@ -168,10 +168,12 @@ private fun BarcodeScannerContent(
 
     DisposableEffect(lifecycleOwner) {
         cameraController.bindToLifecycle(lifecycleOwner)
-        onDispose {
-            cameraController.unbind()
-            barcodeScanner.close()
-        }
+        onDispose { cameraController.unbind() }
+    }
+
+    // lifecycleOwner の差し替えでは閉じず、この Composable の破棄時にのみ閉じる
+    DisposableEffect(Unit) {
+        onDispose { barcodeScanner.close() }
     }
 
     Box(modifier = modifier.fillMaxSize()) {
