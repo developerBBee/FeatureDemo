@@ -1,13 +1,10 @@
-package jp.developer.bbee.featuredemo.ui.barcodescanner
+package jp.developer.bbee.featuredemo.ui.textscanner
 
 import android.Manifest
-import android.content.ActivityNotFoundException
-import android.content.Context
-import android.content.Intent
+import android.content.ClipData
 import android.content.pm.PackageManager
 import android.graphics.Rect
 import android.os.SystemClock
-import android.webkit.URLUtil
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.ImageAnalysis
@@ -16,14 +13,16 @@ import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,6 +32,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,57 +40,58 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.mlkit.vision.barcode.BarcodeScanning
-import com.google.mlkit.vision.barcode.common.Barcode
+import com.google.mlkit.vision.text.Text as MlKitText
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-data class DetectedBarcode(
+data class DetectedTextLine(
     val text: String,
-    val url: String?,
     val bounds: Rect?,
 )
 
 @HiltViewModel
-class BarcodeScannerViewModel @Inject constructor() : ViewModel() {
+class TextScannerViewModel @Inject constructor() : ViewModel() {
 
-    private val _barcodes = MutableStateFlow<List<DetectedBarcode>>(emptyList())
-    val barcodes: StateFlow<List<DetectedBarcode>> = _barcodes.asStateFlow()
+    private val _textLines = MutableStateFlow<List<DetectedTextLine>>(emptyList())
+    val textLines: StateFlow<List<DetectedTextLine>> = _textLines.asStateFlow()
+
+    private val _recognizedText = MutableStateFlow("")
+    val recognizedText: StateFlow<String> = _recognizedText.asStateFlow()
 
     private var lastDetectedAt = 0L
 
-    fun onBarcodesDetected(detected: List<Barcode>) {
+    fun onTextRecognized(result: MlKitText) {
         val now = SystemClock.elapsedRealtime()
-        if (detected.isEmpty()) {
+        val lines = result.textBlocks.flatMap { it.lines }
+        if (lines.isEmpty()) {
             // 検出が一瞬途切れたときのちらつきを抑えるため、少しの間は直前の結果を残す
             if (now - lastDetectedAt > HOLD_DURATION_MS) {
-                _barcodes.value = emptyList()
+                _textLines.value = emptyList()
+                _recognizedText.value = ""
             }
             return
         }
         lastDetectedAt = now
-        _barcodes.value = detected.mapNotNull { barcode ->
-            val text = barcode.displayValue ?: barcode.rawValue ?: return@mapNotNull null
-            DetectedBarcode(
-                text = text,
-                url = barcode.url?.url ?: text.takeIf(URLUtil::isNetworkUrl),
-                bounds = barcode.boundingBox,
-            )
+        _textLines.value = lines.map { line ->
+            DetectedTextLine(text = line.text, bounds = line.boundingBox)
         }
+        _recognizedText.value = result.text
     }
 
     private companion object {
@@ -99,9 +100,9 @@ class BarcodeScannerViewModel @Inject constructor() : ViewModel() {
 }
 
 @Composable
-fun BarcodeScannerScreen(
+fun TextScannerScreen(
     modifier: Modifier = Modifier,
-    viewModel: BarcodeScannerViewModel = hiltViewModel(),
+    viewModel: TextScannerViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
     var hasCameraPermission by remember {
@@ -121,7 +122,7 @@ fun BarcodeScannerScreen(
     }
 
     if (hasCameraPermission) {
-        BarcodeScannerContent(viewModel = viewModel, modifier = modifier)
+        TextScannerContent(viewModel = viewModel, modifier = modifier)
     } else {
         Column(
             modifier = modifier
@@ -130,7 +131,7 @@ fun BarcodeScannerScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
         ) {
-            Text("バーコードの読み取りにはカメラ権限が必要です")
+            Text("文字の読み取りにはカメラ権限が必要です")
             Button(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }) {
                 Text("カメラ権限を許可する")
             }
@@ -139,16 +140,20 @@ fun BarcodeScannerScreen(
 }
 
 @Composable
-private fun BarcodeScannerContent(
-    viewModel: BarcodeScannerViewModel,
+private fun TextScannerContent(
+    viewModel: TextScannerViewModel,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val barcodes by viewModel.barcodes.collectAsStateWithLifecycle()
+    val textLines by viewModel.textLines.collectAsStateWithLifecycle()
+    val recognizedText by viewModel.recognizedText.collectAsStateWithLifecycle()
+    val clipboard = LocalClipboard.current
+    val coroutineScope = rememberCoroutineScope()
 
-    // 既定の BarcodeScanner は全フォーマット対応で、1フレーム内の複数バーコードを検出する
-    val barcodeScanner = remember { BarcodeScanning.getClient() }
+    // 既定のオプションはラテン文字(英数字)向け。日本語等を読み取る場合は
+    // 対応するオプション(例: JapaneseTextRecognizerOptions)に切り替える
+    val textRecognizer = remember { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
     val cameraController = remember {
         LifecycleCameraController(context).apply {
             setImageAnalysisAnalyzer(
@@ -156,11 +161,11 @@ private fun BarcodeScannerContent(
                 // COORDINATE_SYSTEM_VIEW_REFERENCED により boundingBox が
                 // PreviewView 座標系へ自動変換され、そのままオーバーレイ描画に使える
                 MlKitAnalyzer(
-                    listOf(barcodeScanner),
+                    listOf(textRecognizer),
                     ImageAnalysis.COORDINATE_SYSTEM_VIEW_REFERENCED,
                     ContextCompat.getMainExecutor(context),
                 ) { result ->
-                    viewModel.onBarcodesDetected(result.getValue(barcodeScanner).orEmpty())
+                    result.getValue(textRecognizer)?.let(viewModel::onTextRecognized)
                 },
             )
         }
@@ -173,67 +178,83 @@ private fun BarcodeScannerContent(
 
     // lifecycleOwner の差し替えでは閉じず、この Composable の破棄時にのみ閉じる
     DisposableEffect(Unit) {
-        onDispose { barcodeScanner.close() }
+        onDispose { textRecognizer.close() }
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
-        AndroidView(
-            factory = { ctx ->
-                PreviewView(ctx).apply { controller = cameraController }
+    Column(modifier = modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+        ) {
+            AndroidView(
+                factory = { ctx ->
+                    PreviewView(ctx).apply { controller = cameraController }
+                },
+                modifier = Modifier.fillMaxSize(),
+            )
+            TextOverlay(textLines = textLines)
+        }
+        RecognizedTextPanel(
+            recognizedText = recognizedText,
+            onCopyClick = {
+                coroutineScope.launch {
+                    clipboard.setClipEntry(
+                        ClipEntry(ClipData.newPlainText("recognized_text", recognizedText))
+                    )
+                }
             },
-            modifier = Modifier.fillMaxSize(),
-        )
-        BarcodeOverlay(
-            barcodes = barcodes,
-            onUrlClick = { url -> openUrl(context, url) },
         )
     }
 }
 
 @Composable
-private fun BarcodeOverlay(
-    barcodes: List<DetectedBarcode>,
-    onUrlClick: (String) -> Unit,
+private fun TextOverlay(
+    textLines: List<DetectedTextLine>,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            barcodes.forEach { barcode ->
-                val rect = barcode.bounds ?: return@forEach
-                drawRect(
-                    color = Color.Green,
-                    topLeft = Offset(rect.left.toFloat(), rect.top.toFloat()),
-                    size = Size(rect.width().toFloat(), rect.height().toFloat()),
-                    style = Stroke(width = 2.dp.toPx()),
-                )
-            }
-        }
-        barcodes.forEach { barcode ->
-            val rect = barcode.bounds ?: return@forEach
-            Text(
-                text = barcode.text,
-                color = if (barcode.url != null) Color(0xFF82B1FF) else Color.White,
-                style = MaterialTheme.typography.bodyMedium,
-                textDecoration = if (barcode.url != null) TextDecoration.Underline else null,
-                modifier = Modifier
-                    // 読み取った文字は枠のすぐ下に表示する
-                    .offset { IntOffset(rect.left, rect.bottom) }
-                    .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
-                    .then(
-                        barcode.url?.let { url ->
-                            Modifier.clickable { onUrlClick(url) }
-                        } ?: Modifier
-                    )
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
+    Canvas(modifier = modifier.fillMaxSize()) {
+        textLines.forEach { line ->
+            val rect = line.bounds ?: return@forEach
+            drawRect(
+                color = Color.Green,
+                topLeft = Offset(rect.left.toFloat(), rect.top.toFloat()),
+                size = Size(rect.width().toFloat(), rect.height().toFloat()),
+                style = Stroke(width = 2.dp.toPx()),
             )
         }
     }
 }
 
-private fun openUrl(context: Context, url: String) {
-    try {
-        context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
-    } catch (_: ActivityNotFoundException) {
-        // ブラウザーが存在しない場合は何もしない
+@Composable
+private fun RecognizedTextPanel(
+    recognizedText: String,
+    onCopyClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = recognizedText.ifEmpty { "カメラを文字に向けてください" },
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp, max = 120.dp)
+                .verticalScroll(rememberScrollState())
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(4.dp))
+                .padding(8.dp),
+        )
+        Button(
+            onClick = onCopyClick,
+            enabled = recognizedText.isNotEmpty(),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("読み取った文字をコピー")
+        }
     }
 }

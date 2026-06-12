@@ -20,3 +20,6 @@ data object IntentLauncherRoute : NavKey
 
 @Serializable
 data object BarcodeScannerRoute : NavKey
+
+@Serializable
+data object TextScannerRoute : NavKey
