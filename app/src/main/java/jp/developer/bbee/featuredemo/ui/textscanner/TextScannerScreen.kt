@@ -173,10 +173,12 @@ private fun TextScannerContent(
 
     DisposableEffect(lifecycleOwner) {
         cameraController.bindToLifecycle(lifecycleOwner)
-        onDispose {
-            cameraController.unbind()
-            textRecognizer.close()
-        }
+        onDispose { cameraController.unbind() }
+    }
+
+    // lifecycleOwner の差し替えでは閉じず、この Composable の破棄時にのみ閉じる
+    DisposableEffect(Unit) {
+        onDispose { textRecognizer.close() }
     }
 
     Column(modifier = modifier.fillMaxSize()) {
