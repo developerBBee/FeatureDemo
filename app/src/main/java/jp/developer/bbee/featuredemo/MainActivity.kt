@@ -21,6 +21,7 @@ import jp.developer.bbee.featuredemo.navigation.DetailRoute
 import jp.developer.bbee.featuredemo.navigation.HomeRoute
 import jp.developer.bbee.featuredemo.navigation.BarcodeScannerRoute
 import jp.developer.bbee.featuredemo.navigation.IntentLauncherRoute
+import jp.developer.bbee.featuredemo.navigation.FaceDetectionRoute
 import jp.developer.bbee.featuredemo.navigation.TextScannerRoute
 import jp.developer.bbee.featuredemo.ui.authenticated.AuthenticatedScreen
 import jp.developer.bbee.featuredemo.ui.barcodescanner.BarcodeScannerScreen
@@ -28,6 +29,7 @@ import jp.developer.bbee.featuredemo.ui.biometric.BiometricAuthScreen
 import jp.developer.bbee.featuredemo.ui.detail.DetailScreen
 import jp.developer.bbee.featuredemo.ui.home.HomeScreen
 import jp.developer.bbee.featuredemo.ui.intentlauncher.IntentLauncherScreen
+import jp.developer.bbee.featuredemo.ui.facedetection.FaceDetectionScreen
 import jp.developer.bbee.featuredemo.ui.textscanner.TextScannerScreen
 import jp.developer.bbee.featuredemo.ui.theme.FeatureDemoTheme
 
@@ -71,6 +73,7 @@ private fun AppNavDisplay(modifier: Modifier = Modifier) {
                     onIntentLauncherDemoClick = { backStack.add(IntentLauncherRoute) },
                     onBarcodeScannerDemoClick = { backStack.add(BarcodeScannerRoute) },
                     onTextScannerDemoClick = { backStack.add(TextScannerRoute) },
+                    onFaceDetectionDemoClick = { backStack.add(FaceDetectionRoute) },
                 )
             }
             entry<DetailRoute> { route ->
@@ -102,6 +105,9 @@ private fun AppNavDisplay(modifier: Modifier = Modifier) {
             }
             entry<TextScannerRoute> {
                 TextScannerScreen()
+            }
+            entry<FaceDetectionRoute> {
+                FaceDetectionScreen()
             }
         },
     )

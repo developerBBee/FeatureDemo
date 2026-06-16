@@ -23,3 +23,6 @@ data object BarcodeScannerRoute : NavKey
 
 @Serializable
 data object TextScannerRoute : NavKey
+
+@Serializable
+data object FaceDetectionRoute : NavKey
