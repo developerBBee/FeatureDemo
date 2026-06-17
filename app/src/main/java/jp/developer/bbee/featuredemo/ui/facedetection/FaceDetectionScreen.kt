@@ -227,7 +227,7 @@ private fun FaceOverlay(
             if (labelLines.isNotEmpty()) {
                 Column(
                     modifier = Modifier
-                        .offset { IntOffset(rect.left, rect.bottom + 4) }
+                        .offset { IntOffset(rect.left, rect.bottom + 4.dp.roundToPx()) }
                         .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
                         .padding(horizontal = 8.dp, vertical = 4.dp),
                 ) {
