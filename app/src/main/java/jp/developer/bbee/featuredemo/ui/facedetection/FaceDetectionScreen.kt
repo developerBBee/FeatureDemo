@@ -48,7 +48,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
-import java.util.concurrent.Executors
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -153,12 +152,10 @@ private fun FaceDetectionContent(
             .build()
     }
     val faceDetector = remember { FaceDetection.getClient(faceDetectorOptions) }
-    // フレーム解析を UI スレッドから切り離すための専用スレッド
-    val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
     val cameraController = remember {
         LifecycleCameraController(context).apply {
             setImageAnalysisAnalyzer(
-                analysisExecutor,
+                ContextCompat.getMainExecutor(context),
                 // COORDINATE_SYSTEM_VIEW_REFERENCED により boundingBox が
                 // PreviewView 座標系へ自動変換され、そのままオーバーレイ描画に使える
                 MlKitAnalyzer(
@@ -178,10 +175,7 @@ private fun FaceDetectionContent(
     }
 
     DisposableEffect(Unit) {
-        onDispose {
-            faceDetector.close()
-            analysisExecutor.shutdown()
-        }
+        onDispose { faceDetector.close() }
     }
 
     Column(modifier = modifier.fillMaxSize()) {
