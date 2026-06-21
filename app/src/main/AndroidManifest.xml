@@ -7,6 +7,7 @@
         android:required="false" />
 
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".FeatureDemoApplication"
@@ -29,6 +30,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- 選択肢付き通知のアクション(承認/却下)を受け取る。
+             アプリ内の PendingIntent からのみ起動するため exported は false -->
+        <receiver
+            android:name=".notification.NotificationActionReceiver"
+            android:exported="false" />
     </application>
 
 </manifest>

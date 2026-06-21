@@ -26,3 +26,6 @@ data object TextScannerRoute : NavKey
 
 @Serializable
 data object FaceDetectionRoute : NavKey
+
+@Serializable
+data object NotificationRoute : NavKey
