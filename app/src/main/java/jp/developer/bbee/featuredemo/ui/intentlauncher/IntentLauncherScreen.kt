@@ -188,7 +188,9 @@ private fun smsIntent(title: String, body: String): Intent =
 private fun textShareIntent(subject: String, body: String): Intent {
     val sendIntent = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
-        putExtra(Intent.EXTRA_TEXT, body)
+        // LINE 等 EXTRA_TEXT のみ参照するアプリ向けに件名と本文を結合して渡す
+        putExtra(Intent.EXTRA_TEXT, listOf(subject, body).filter { it.isNotBlank() }.joinToString("\n"))
+        // メールアプリ向けに件名は EXTRA_SUBJECT にも渡す
         if (subject.isNotBlank()) putExtra(Intent.EXTRA_SUBJECT, subject)
     }
     return Intent.createChooser(sendIntent, "共有")
