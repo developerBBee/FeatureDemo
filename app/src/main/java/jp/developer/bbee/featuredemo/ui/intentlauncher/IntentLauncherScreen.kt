@@ -157,6 +157,12 @@ fun IntentLauncherScreen(
         ) {
             Text("ファイルとして保存")
         }
+        Button(
+            onClick = dropUnlessResumed { startActivitySafely(textShareIntent(title, body)) },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("共有アプリを選択")
+        }
         message?.let {
             Text(text = it, style = MaterialTheme.typography.bodyMedium)
         }
@@ -177,3 +183,15 @@ private fun smsIntent(title: String, body: String): Intent =
         data = "smsto:".toUri()
         putExtra("sms_body", listOf(title, body).filter { it.isNotBlank() }.joinToString("\n"))
     }
+
+// ACTION_SEND でテキストを受け取れるアプリ一覧をシステムチューザーで表示する
+private fun textShareIntent(subject: String, body: String): Intent {
+    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        // LINE 等 EXTRA_TEXT のみ参照するアプリ向けに件名と本文を結合して渡す
+        putExtra(Intent.EXTRA_TEXT, listOf(subject, body).filter { it.isNotBlank() }.joinToString("\n"))
+        // メールアプリ向けに件名は EXTRA_SUBJECT にも渡す
+        if (subject.isNotBlank()) putExtra(Intent.EXTRA_SUBJECT, subject)
+    }
+    return Intent.createChooser(sendIntent, "共有")
+}
