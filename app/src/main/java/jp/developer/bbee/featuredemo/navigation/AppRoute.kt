@@ -29,3 +29,6 @@ data object FaceDetectionRoute : NavKey
 
 @Serializable
 data object NotificationRoute : NavKey
+
+@Serializable
+data object DailyRoutesMapRoute : NavKey

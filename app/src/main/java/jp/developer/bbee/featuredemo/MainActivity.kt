@@ -27,9 +27,11 @@ import jp.developer.bbee.featuredemo.navigation.HomeRoute
 import jp.developer.bbee.featuredemo.navigation.BarcodeScannerRoute
 import jp.developer.bbee.featuredemo.navigation.IntentLauncherRoute
 import jp.developer.bbee.featuredemo.navigation.FaceDetectionRoute
+import jp.developer.bbee.featuredemo.navigation.DailyRoutesMapRoute
 import jp.developer.bbee.featuredemo.navigation.NotificationRoute
 import jp.developer.bbee.featuredemo.navigation.TextScannerRoute
 import jp.developer.bbee.featuredemo.notification.NotificationHelper
+import jp.developer.bbee.featuredemo.ui.dailyroutesmap.DailyRoutesMapScreen
 import jp.developer.bbee.featuredemo.ui.authenticated.AuthenticatedScreen
 import jp.developer.bbee.featuredemo.ui.barcodescanner.BarcodeScannerScreen
 import jp.developer.bbee.featuredemo.ui.biometric.BiometricAuthScreen
@@ -114,6 +116,7 @@ private fun AppNavDisplay(
                     onTextScannerDemoClick = { backStack.add(TextScannerRoute) },
                     onFaceDetectionDemoClick = { backStack.add(FaceDetectionRoute) },
                     onNotificationDemoClick = { backStack.add(NotificationRoute) },
+                    onDailyRoutesMapDemoClick = { backStack.add(DailyRoutesMapRoute) },
                 )
             }
             entry<DetailRoute> { route ->
@@ -151,6 +154,11 @@ private fun AppNavDisplay(
             }
             entry<NotificationRoute> {
                 NotificationDemoScreen()
+            }
+            entry<DailyRoutesMapRoute> {
+                DailyRoutesMapScreen(
+                    onBack = { backStack.removeLastOrNull() },
+                )
             }
         },
     )
