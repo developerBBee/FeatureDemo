@@ -83,7 +83,8 @@ class DailyRoutesMapViewModel @Inject constructor(
     private val _selectedDateIndex = MutableStateFlow(0)
 
     val selectedDate: StateFlow<String?> = combine(availableDates, _selectedDateIndex) { dates, idx ->
-        dates.getOrNull(idx)
+        if (dates.isEmpty()) null
+        else dates.getOrNull(idx.coerceIn(0, dates.size - 1))
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     val routePoints: StateFlow<List<LocationPointEntity>> = selectedDate
@@ -105,11 +106,12 @@ class DailyRoutesMapViewModel @Inject constructor(
 
     fun selectOlderDate() {
         val max = (availableDates.value.size - 1).coerceAtLeast(0)
-        _selectedDateIndex.value = (_selectedDateIndex.value + 1).coerceAtMost(max)
+        _selectedDateIndex.value = (_selectedDateIndex.value.coerceIn(0, max) + 1).coerceAtMost(max)
     }
 
     fun selectNewerDate() {
-        _selectedDateIndex.value = (_selectedDateIndex.value - 1).coerceAtLeast(0)
+        val max = (availableDates.value.size - 1).coerceAtLeast(0)
+        _selectedDateIndex.value = (_selectedDateIndex.value.coerceIn(0, max) - 1).coerceAtLeast(0)
     }
 }
 

@@ -20,7 +20,7 @@ class LocationRepository @Inject constructor(
 
     suspend fun savePoint(latitude: Double, longitude: Double) {
         val now = System.currentTimeMillis()
-        val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(now))
+        val date = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(now))
         dao.insertPoint(
             LocationPointEntity(
                 latitude = latitude,

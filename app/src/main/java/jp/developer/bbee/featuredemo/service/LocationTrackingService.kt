@@ -71,14 +71,18 @@ class LocationTrackingService : Service() {
         try {
             fusedLocationClient.requestLocationUpdates(request, locationCallback, mainLooper)
         } catch (_: SecurityException) {
+            trackingStateHolder.setTracking(false)
+            stopSelf()
         }
     }
 
     private fun buildNotification(): Notification {
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "位置情報記録", NotificationManager.IMPORTANCE_LOW)
-        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            manager.createNotificationChannel(
+                NotificationChannel(CHANNEL_ID, "位置情報記録", NotificationManager.IMPORTANCE_LOW)
+            )
+        }
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("経路を記録中")
             .setContentText("位置情報を取得しています")
