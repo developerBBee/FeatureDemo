@@ -49,7 +49,13 @@ class LocationTrackingService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        startForeground(NOTIFICATION_ID, buildNotification())
+        try {
+            startForeground(NOTIFICATION_ID, buildNotification())
+        } catch (e: Exception) {
+            trackingStateHolder.setTracking(false)
+            stopSelf()
+            return START_NOT_STICKY
+        }
         trackingStateHolder.setTracking(true)
         startLocationUpdates()
         return START_STICKY

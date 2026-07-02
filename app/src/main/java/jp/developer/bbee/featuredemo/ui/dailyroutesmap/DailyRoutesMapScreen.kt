@@ -37,7 +37,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -131,6 +133,11 @@ fun DailyRoutesMapScreen(
 
     var hasLocationPermission by remember {
         mutableStateOf(hasLocationPermission(context))
+    }
+
+    // バックスタックからの復帰時に権限が取り消されている場合を検出する
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        hasLocationPermission = hasLocationPermission(context)
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
