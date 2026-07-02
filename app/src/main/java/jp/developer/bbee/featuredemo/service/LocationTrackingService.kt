@@ -3,6 +3,7 @@ package jp.developer.bbee.featuredemo.service
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -78,7 +79,8 @@ class LocationTrackingService : Service() {
             .build()
         try {
             fusedLocationClient.requestLocationUpdates(request, locationCallback, mainLooper)
-        } catch (_: SecurityException) {
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Location permission not granted; stopping service", e)
             trackingStateHolder.setTracking(false)
             stopSelf()
         }
@@ -91,10 +93,14 @@ class LocationTrackingService : Service() {
                 NotificationChannel(CHANNEL_ID, "位置情報記録", NotificationManager.IMPORTANCE_LOW)
             )
         }
+        val contentIntent = packageManager.getLaunchIntentForPackage(packageName)?.let {
+            PendingIntent.getActivity(this, 0, it, PendingIntent.FLAG_IMMUTABLE)
+        }
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("経路を記録中")
             .setContentText("位置情報を取得しています")
             .setSmallIcon(android.R.drawable.ic_menu_mylocation)
+            .setContentIntent(contentIntent)
             .setOngoing(true)
             .build()
     }

@@ -33,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -59,13 +60,13 @@ import jp.developer.bbee.featuredemo.data.location.LocationRepository
 import jp.developer.bbee.featuredemo.service.LocationTrackingService
 import jp.developer.bbee.featuredemo.service.TrackingStateHolder
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
@@ -84,9 +85,15 @@ class DailyRoutesMapViewModel @Inject constructor(
 
     private val _selectedDateIndex = MutableStateFlow(0)
 
-    val selectedDate: StateFlow<String?> = combine(availableDates, _selectedDateIndex) { dates, idx ->
-        if (dates.isEmpty()) null
-        else dates.getOrNull(idx.coerceIn(0, dates.size - 1))
+    // selectedDate / isOldestDate / isNewestDate はすべて同じ clamp 済みインデックスから導出し、
+    // availableDates が縮んだ場合でも表示と前後ボタンの活性状態が食い違わないようにする
+    private val clampedDateIndex: Flow<Int> =
+        combine(availableDates, _selectedDateIndex) { dates, idx ->
+            idx.coerceIn(0, (dates.size - 1).coerceAtLeast(0))
+        }
+
+    val selectedDate: StateFlow<String?> = combine(availableDates, clampedDateIndex) { dates, idx ->
+        dates.getOrNull(idx)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     val routePoints: StateFlow<List<LocationPointEntity>> = selectedDate
@@ -95,13 +102,13 @@ class DailyRoutesMapViewModel @Inject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val isOldestDate: StateFlow<Boolean> = combine(availableDates, _selectedDateIndex) { dates, idx ->
+    val isOldestDate: StateFlow<Boolean> = combine(availableDates, clampedDateIndex) { dates, idx ->
         idx >= dates.size - 1
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
-    val isNewestDate: StateFlow<Boolean> = _selectedDateIndex
-        .map { it == 0 }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+    val isNewestDate: StateFlow<Boolean> = combine(availableDates, clampedDateIndex) { dates, idx ->
+        dates.isEmpty() || idx == 0
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
     fun startTracking() = LocationTrackingService.start(context)
     fun stopTracking() = LocationTrackingService.stop(context)
@@ -185,13 +192,13 @@ fun DailyRoutesMapScreen(
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState,
-                properties = MapProperties(isMyLocationEnabled = true),
+                properties = remember { MapProperties(isMyLocationEnabled = true) },
             ) {
                 val latLngs = routePoints.map { LatLng(it.latitude, it.longitude) }
                 if (latLngs.size >= 2) {
                     Polyline(
                         points = latLngs,
-                        color = androidx.compose.ui.graphics.Color(0xFF1976D2L),
+                        color = RoutePolylineColor,
                         width = 10f,
                     )
                 }
@@ -318,6 +325,9 @@ private fun PermissionRequestContent(
         }
     }
 }
+
+// Material Blue 700
+private val RoutePolylineColor = Color(0xFF1976D2)
 
 private fun hasLocationPermission(context: Context): Boolean =
     ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
