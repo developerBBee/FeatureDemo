@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -14,6 +16,24 @@ android {
         }
     }
 
+    val localProperties = Properties().apply {
+        val f = rootProject.file("local.properties")
+        if (f.exists()) f.inputStream().use { load(it) }
+    }
+
+    // 優先順: local.properties → gradle.properties / -PMAPS_API_KEY → 環境変数
+    val mapsApiKey = localProperties.getProperty("MAPS_API_KEY")
+        ?: providers.gradleProperty("MAPS_API_KEY").orNull
+        ?: providers.environmentVariable("MAPS_API_KEY").orNull
+        ?: ""
+    if (mapsApiKey.isEmpty()) {
+        logger.warn(
+            "warning: MAPS_API_KEY is not set. Google Maps will not render. " +
+                "Set it in local.properties, gradle.properties, -PMAPS_API_KEY, " +
+                "or the MAPS_API_KEY environment variable."
+        )
+    }
+
     defaultConfig {
         applicationId = "jp.developer.bbee.featuredemo"
         minSdk = 24
@@ -22,6 +42,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     buildTypes {
@@ -67,6 +88,11 @@ dependencies {
     implementation(libs.mlkit.barcode.scanning)
     implementation(libs.mlkit.text.recognition)
     implementation(libs.mlkit.face.detection)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.play.services.location)
+    implementation(libs.maps.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
