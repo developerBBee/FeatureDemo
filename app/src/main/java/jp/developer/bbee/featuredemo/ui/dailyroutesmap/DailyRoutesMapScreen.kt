@@ -3,6 +3,7 @@ package jp.developer.bbee.featuredemo.ui.dailyroutesmap
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -67,6 +68,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
@@ -85,16 +87,19 @@ class DailyRoutesMapViewModel @Inject constructor(
 
     private val _selectedDateIndex = MutableStateFlow(0)
 
-    // selectedDate / isOldestDate / isNewestDate はすべて同じ clamp 済みインデックスから導出し、
-    // availableDates が縮んだ場合でも表示と前後ボタンの活性状態が食い違わないようにする
-    private val clampedDateIndex: Flow<Int> =
+    private data class DateSelection(val dates: List<String>, val clampedIndex: Int)
+
+    // availableDates と _selectedDateIndex の combine はここ1箇所に集約し、
+    // selectedDate / isOldestDate / isNewestDate はすべて同じ clamp 済みインデックスから導出する。
+    // availableDates が縮んだ場合でも表示と前後ボタンの活性状態が食い違わない
+    private val dateSelection: Flow<DateSelection> =
         combine(availableDates, _selectedDateIndex) { dates, idx ->
-            idx.coerceIn(0, (dates.size - 1).coerceAtLeast(0))
+            DateSelection(dates, idx.coerceIn(0, (dates.size - 1).coerceAtLeast(0)))
         }
 
-    val selectedDate: StateFlow<String?> = combine(availableDates, clampedDateIndex) { dates, idx ->
-        dates.getOrNull(idx)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    val selectedDate: StateFlow<String?> = dateSelection
+        .map { it.dates.getOrNull(it.clampedIndex) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     val routePoints: StateFlow<List<LocationPointEntity>> = selectedDate
         .flatMapLatest { date ->
@@ -102,13 +107,13 @@ class DailyRoutesMapViewModel @Inject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val isOldestDate: StateFlow<Boolean> = combine(availableDates, clampedDateIndex) { dates, idx ->
-        idx >= dates.size - 1
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+    val isOldestDate: StateFlow<Boolean> = dateSelection
+        .map { it.clampedIndex >= it.dates.size - 1 }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
-    val isNewestDate: StateFlow<Boolean> = combine(availableDates, clampedDateIndex) { dates, idx ->
-        dates.isEmpty() || idx == 0
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+    val isNewestDate: StateFlow<Boolean> = dateSelection
+        .map { it.dates.isEmpty() || it.clampedIndex == 0 }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
     fun startTracking() = LocationTrackingService.start(context)
     fun stopTracking() = LocationTrackingService.stop(context)
@@ -155,6 +160,14 @@ fun DailyRoutesMapScreen(
             permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
     }
 
+    // API 33+ では POST_NOTIFICATIONS 未許可だと記録中のフォアグラウンド通知が表示されない。
+    // 拒否されてもサービス自体は起動できるため、結果に関わらず記録は開始する
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {
+        viewModel.startTracking()
+    }
+
     val cameraPositionState = rememberCameraPositionState {
         // 東京駅をデフォルト中心
         position = CameraPosition.fromLatLngZoom(LatLng(35.6812362, 139.7671248), 14f)
@@ -194,7 +207,9 @@ fun DailyRoutesMapScreen(
                 cameraPositionState = cameraPositionState,
                 properties = remember { MapProperties(isMyLocationEnabled = true) },
             ) {
-                val latLngs = routePoints.map { LatLng(it.latitude, it.longitude) }
+                val latLngs = remember(routePoints) {
+                    routePoints.map { LatLng(it.latitude, it.longitude) }
+                }
                 if (latLngs.size >= 2) {
                     Polyline(
                         points = latLngs,
@@ -281,7 +296,21 @@ fun DailyRoutesMapScreen(
 
             // 記録ボタン
             ExtendedFloatingActionButton(
-                onClick = { if (isTracking) viewModel.stopTracking() else viewModel.startTracking() },
+                onClick = {
+                    when {
+                        isTracking -> viewModel.stopTracking()
+
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                            ContextCompat.checkSelfPermission(
+                                context, Manifest.permission.POST_NOTIFICATIONS
+                            ) != PackageManager.PERMISSION_GRANTED ->
+                            notificationPermissionLauncher.launch(
+                                Manifest.permission.POST_NOTIFICATIONS
+                            )
+
+                        else -> viewModel.startTracking()
+                    }
+                },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 32.dp),

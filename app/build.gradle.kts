@@ -19,6 +19,19 @@ android {
         if (f.exists()) f.inputStream().use { load(it) }
     }
 
+    // 優先順: local.properties → gradle.properties / -PMAPS_API_KEY → 環境変数
+    val mapsApiKey = localProperties.getProperty("MAPS_API_KEY")
+        ?: providers.gradleProperty("MAPS_API_KEY").orNull
+        ?: providers.environmentVariable("MAPS_API_KEY").orNull
+        ?: ""
+    if (mapsApiKey.isEmpty()) {
+        logger.warn(
+            "warning: MAPS_API_KEY is not set. Google Maps will not render. " +
+                "Set it in local.properties, gradle.properties, -PMAPS_API_KEY, " +
+                "or the MAPS_API_KEY environment variable."
+        )
+    }
+
     defaultConfig {
         applicationId = "jp.developer.bbee.featuredemo"
         minSdk = 24
@@ -27,7 +40,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY") ?: ""
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     buildTypes {
