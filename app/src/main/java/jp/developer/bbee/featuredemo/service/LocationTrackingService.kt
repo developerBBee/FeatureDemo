@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
@@ -52,6 +53,7 @@ class LocationTrackingService : Service() {
         try {
             startForeground(NOTIFICATION_ID, buildNotification())
         } catch (e: Exception) {
+            Log.e(TAG, "startForeground failed; stopping service", e)
             trackingStateHolder.setTracking(false)
             stopSelf()
             return START_NOT_STICKY
@@ -98,6 +100,7 @@ class LocationTrackingService : Service() {
     }
 
     companion object {
+        private const val TAG = "LocationTrackingService"
         private const val CHANNEL_ID = "location_tracking"
         private const val NOTIFICATION_ID = 2001
         private const val INTERVAL_MS = 30_000L
