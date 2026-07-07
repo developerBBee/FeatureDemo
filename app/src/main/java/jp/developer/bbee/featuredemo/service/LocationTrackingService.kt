@@ -37,9 +37,17 @@ class LocationTrackingService : Service() {
 
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
-            result.lastLocation?.let { location ->
-                serviceScope.launch {
-                    locationRepository.savePoint(location.latitude, location.longitude)
+            // 更新がバッチ配信された場合も中間地点を欠落させないよう全地点を保存する。
+            // 1つの coroutine 内で順に insert し、保存順序を保つ
+            val locations = result.locations.toList()
+            if (locations.isEmpty()) return
+            serviceScope.launch {
+                locations.forEach { location ->
+                    locationRepository.savePoint(
+                        latitude = location.latitude,
+                        longitude = location.longitude,
+                        timestamp = location.time,
+                    )
                 }
             }
         }

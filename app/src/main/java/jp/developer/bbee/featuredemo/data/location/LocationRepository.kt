@@ -18,14 +18,17 @@ class LocationRepository @Inject constructor(
     fun getPointsForDate(date: String): Flow<List<LocationPointEntity>> =
         dao.getPointsForDate(date)
 
-    suspend fun savePoint(latitude: Double, longitude: Double) {
-        val now = System.currentTimeMillis()
-        val date = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(now))
+    suspend fun savePoint(
+        latitude: Double,
+        longitude: Double,
+        timestamp: Long = System.currentTimeMillis(),
+    ) {
+        val date = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(timestamp))
         dao.insertPoint(
             LocationPointEntity(
                 latitude = latitude,
                 longitude = longitude,
-                timestamp = now,
+                timestamp = timestamp,
                 date = date,
             )
         )

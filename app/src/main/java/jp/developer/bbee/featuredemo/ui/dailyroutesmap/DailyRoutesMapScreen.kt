@@ -178,7 +178,9 @@ fun DailyRoutesMapScreen(
             val bounds = LatLngBounds.Builder().apply {
                 routePoints.forEach { include(LatLng(it.latitude, it.longitude)) }
             }.build()
-            cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 120))
+            cameraPositionState.animate(
+                CameraUpdateFactory.newLatLngBounds(bounds, ROUTE_BOUNDS_PADDING_PX)
+            )
         } else if (routePoints.size == 1) {
             cameraPositionState.animate(
                 CameraUpdateFactory.newLatLngZoom(
@@ -357,6 +359,10 @@ private fun PermissionRequestContent(
 
 // Material Blue 700
 private val RoutePolylineColor = Color(0xFF1976D2)
+
+// 経路全体を表示する際の地図端からの余白。
+// CameraUpdateFactory.newLatLngBounds の padding はピクセル単位
+private const val ROUTE_BOUNDS_PADDING_PX = 120
 
 private fun hasLocationPermission(context: Context): Boolean =
     ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
