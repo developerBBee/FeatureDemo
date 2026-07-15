@@ -32,3 +32,6 @@ data object NotificationRoute : NavKey
 
 @Serializable
 data object DailyRoutesMapRoute : NavKey
+
+@Serializable
+data object ImageConversionRoute : NavKey

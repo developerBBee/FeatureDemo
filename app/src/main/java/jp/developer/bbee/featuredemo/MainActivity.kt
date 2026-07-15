@@ -28,6 +28,7 @@ import jp.developer.bbee.featuredemo.navigation.BarcodeScannerRoute
 import jp.developer.bbee.featuredemo.navigation.IntentLauncherRoute
 import jp.developer.bbee.featuredemo.navigation.FaceDetectionRoute
 import jp.developer.bbee.featuredemo.navigation.DailyRoutesMapRoute
+import jp.developer.bbee.featuredemo.navigation.ImageConversionRoute
 import jp.developer.bbee.featuredemo.navigation.NotificationRoute
 import jp.developer.bbee.featuredemo.navigation.TextScannerRoute
 import jp.developer.bbee.featuredemo.notification.NotificationHelper
@@ -39,6 +40,7 @@ import jp.developer.bbee.featuredemo.ui.detail.DetailScreen
 import jp.developer.bbee.featuredemo.ui.home.HomeScreen
 import jp.developer.bbee.featuredemo.ui.intentlauncher.IntentLauncherScreen
 import jp.developer.bbee.featuredemo.ui.facedetection.FaceDetectionScreen
+import jp.developer.bbee.featuredemo.ui.imageconversion.ImageConversionScreen
 import jp.developer.bbee.featuredemo.ui.notification.NotificationDemoScreen
 import jp.developer.bbee.featuredemo.ui.textscanner.TextScannerScreen
 import jp.developer.bbee.featuredemo.ui.theme.FeatureDemoTheme
@@ -117,6 +119,7 @@ private fun AppNavDisplay(
                     onFaceDetectionDemoClick = { backStack.add(FaceDetectionRoute) },
                     onNotificationDemoClick = { backStack.add(NotificationRoute) },
                     onDailyRoutesMapDemoClick = { backStack.add(DailyRoutesMapRoute) },
+                    onImageConversionDemoClick = { backStack.add(ImageConversionRoute) },
                 )
             }
             entry<DetailRoute> { route ->
@@ -159,6 +162,9 @@ private fun AppNavDisplay(
                 DailyRoutesMapScreen(
                     onBack = { backStack.removeLastOrNull() },
                 )
+            }
+            entry<ImageConversionRoute> {
+                ImageConversionScreen()
             }
         },
     )
