@@ -19,7 +19,8 @@ object BmpEncoder {
 
     fun encode(pixels: IntArray, width: Int, height: Int): ByteArray {
         require(width > 0 && height > 0) { "width と height は正の値である必要があります" }
-        require(pixels.size == width * height) { "pixels のサイズが width * height と一致しません" }
+        // width * height は Int でオーバーフローし得るため Long で比較する
+        require(pixels.size.toLong() == width.toLong() * height) { "pixels のサイズが width * height と一致しません" }
 
         val rowBytes = width * 3
         // 各行は 4 バイト境界にパディングされる

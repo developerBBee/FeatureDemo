@@ -1,6 +1,7 @@
 package jp.developer.bbee.featuredemo.image
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class BmpEncoderTest {
@@ -43,6 +44,15 @@ class BmpEncoderTest {
         // 次の行は画像の上段 (red, green)
         assertBgr(bytes, 62, expectedB = 0x00, expectedG = 0x00, expectedR = 0xFF)
         assertBgr(bytes, 65, expectedB = 0x00, expectedG = 0xFF, expectedR = 0x00)
+    }
+
+    @Test
+    fun `widthとheightの積がIntをオーバーフローする場合は例外になる`() {
+        // 65536 * 65536 は Int では 0 にラップするため、Int のままの比較では
+        // 空配列が誤って受理されてしまう
+        assertThrows(IllegalArgumentException::class.java) {
+            BmpEncoder.encode(IntArray(0), width = 65536, height = 65536)
+        }
     }
 
     private fun assertBgr(bytes: ByteArray, offset: Int, expectedB: Int, expectedG: Int, expectedR: Int) {

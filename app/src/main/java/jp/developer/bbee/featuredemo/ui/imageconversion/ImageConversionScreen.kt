@@ -44,7 +44,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jp.developer.bbee.featuredemo.image.ConversionFormat
 import jp.developer.bbee.featuredemo.image.ImageConverter
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -80,8 +82,13 @@ class ImageConversionViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ImageConversionUiState())
     val uiState: StateFlow<ImageConversionUiState> = _uiState.asStateFlow()
 
+    private var loadImageJob: Job? = null
+
     fun onImageSelected(uri: Uri) {
-        viewModelScope.launch {
+        // 短時間に連続して画像を選択した場合に、先に開始した読み込みが後から完了して
+        // 新しい選択結果を上書きしないよう、進行中の読み込みをキャンセルする
+        loadImageJob?.cancel()
+        loadImageJob = viewModelScope.launch {
             _uiState.update { it.copy(resultMessage = null, isError = false) }
             runCatching {
                 withContext(Dispatchers.IO) {
@@ -92,6 +99,8 @@ class ImageConversionViewModel @Inject constructor(
             }.onSuccess { (bitmap, info) ->
                 _uiState.update { it.copy(sourceBitmap = bitmap, sourceInfo = info) }
             }.onFailure { e ->
+                // キャンセルはエラーではないため表示せず、コルーチンの規約どおり再送出する
+                if (e is CancellationException) throw e
                 _uiState.update {
                     it.copy(resultMessage = "画像の読み込みに失敗しました: ${e.message}", isError = true)
                 }
