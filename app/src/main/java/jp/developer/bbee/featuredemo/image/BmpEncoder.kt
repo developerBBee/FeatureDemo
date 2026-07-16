@@ -22,18 +22,21 @@ object BmpEncoder {
         // width * height は Int でオーバーフローし得るため Long で比較する
         require(pixels.size.toLong() == width.toLong() * height) { "pixels のサイズが width * height と一致しません" }
 
-        val rowBytes = width * 3
+        // width * height の検証を通る入力でも 3 バイト/ピクセル換算で Int を超え得るため
+        // サイズ計算は Long で行い、ByteBuffer で扱えない 2GB 超は明示的に弾く
+        val rowBytes = width.toLong() * 3
         // 各行は 4 バイト境界にパディングされる
-        val padding = (4 - rowBytes % 4) % 4
+        val padding = ((4 - rowBytes % 4) % 4).toInt()
         val imageSize = (rowBytes + padding) * height
         val fileSize = PIXEL_DATA_OFFSET + imageSize
+        require(fileSize <= Int.MAX_VALUE) { "BMP のファイルサイズが上限 (2GB) を超えています" }
 
-        val buffer = ByteBuffer.allocate(fileSize).order(ByteOrder.LITTLE_ENDIAN)
+        val buffer = ByteBuffer.allocate(fileSize.toInt()).order(ByteOrder.LITTLE_ENDIAN)
 
         // BITMAPFILEHEADER
         buffer.put('B'.code.toByte())
         buffer.put('M'.code.toByte())
-        buffer.putInt(fileSize)
+        buffer.putInt(fileSize.toInt())
         buffer.putInt(0) // 予約領域
         buffer.putInt(PIXEL_DATA_OFFSET)
 
@@ -44,7 +47,7 @@ object BmpEncoder {
         buffer.putShort(1) // planes
         buffer.putShort(24) // bits per pixel
         buffer.putInt(0) // BI_RGB (無圧縮)
-        buffer.putInt(imageSize)
+        buffer.putInt(imageSize.toInt())
         buffer.putInt(PIXELS_PER_METER)
         buffer.putInt(PIXELS_PER_METER)
         buffer.putInt(0) // 使用色数 (0 = 全色)
