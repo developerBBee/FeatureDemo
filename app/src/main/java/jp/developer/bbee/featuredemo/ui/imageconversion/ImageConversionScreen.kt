@@ -120,12 +120,15 @@ class ImageConversionViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isConverting = true, resultMessage = null, isError = false) }
             runCatching {
-                withContext(Dispatchers.Default) {
-                    val bytes = ImageConverter.convert(context, bitmap, format)
+                // 変換 (CPU バウンド) と保存 (IO バウンド) でディスパッチャを分ける
+                val bytes = withContext(Dispatchers.Default) {
+                    ImageConverter.convert(context, bitmap, format)
+                }
+                withContext(Dispatchers.IO) {
                     context.contentResolver.openOutputStream(target)?.use { it.write(bytes) }
                         ?: throw IllegalStateException("出力先を開けませんでした")
-                    bytes.size
                 }
+                bytes.size
             }.onSuccess { size ->
                 _uiState.update {
                     it.copy(
