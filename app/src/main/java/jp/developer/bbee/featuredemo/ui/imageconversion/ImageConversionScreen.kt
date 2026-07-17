@@ -237,6 +237,9 @@ fun ImageConversionScreen(
                     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                 )
             },
+            // 変換中に画像を選び直すと、プレビューと実際に保存される画像
+            // (変換開始時にキャプチャしたもの) が食い違うため無効化する
+            enabled = !uiState.isConverting,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text("画像を選択")
