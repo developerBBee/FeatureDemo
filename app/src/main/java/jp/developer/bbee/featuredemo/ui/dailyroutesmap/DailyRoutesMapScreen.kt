@@ -14,9 +14,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -60,6 +57,8 @@ import jp.developer.bbee.featuredemo.data.db.LocationPointEntity
 import jp.developer.bbee.featuredemo.data.location.LocationRepository
 import jp.developer.bbee.featuredemo.service.LocationTrackingService
 import jp.developer.bbee.featuredemo.service.TrackingStateHolder
+import jp.developer.bbee.featuredemo.ui.icons.arrowBack
+import jp.developer.bbee.featuredemo.ui.icons.arrowForward
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -249,7 +248,7 @@ fun DailyRoutesMapScreen(
                     .padding(start = 8.dp, top = 8.dp),
             ) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    imageVector = arrowBack,
                     contentDescription = "戻る",
                     tint = MaterialTheme.colorScheme.onSurface,
                 )
@@ -270,7 +269,7 @@ fun DailyRoutesMapScreen(
                         onClick = viewModel::selectOlderDate,
                         enabled = !isOldestDate,
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "前の日")
+                        Icon(arrowBack, contentDescription = "前の日")
                     }
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -291,7 +290,7 @@ fun DailyRoutesMapScreen(
                         onClick = viewModel::selectNewerDate,
                         enabled = !isNewestDate,
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "次の日")
+                        Icon(arrowForward, contentDescription = "次の日")
                     }
                 }
             }
