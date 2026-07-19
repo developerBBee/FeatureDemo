@@ -8,6 +8,12 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
+val localProps = Properties()
+val localPropsFile = rootProject.file("local.properties")!!
+if (localPropsFile.exists()) {
+    localPropsFile.inputStream().use { localProps.load(it) }
+}
+
 android {
     namespace = "jp.developer.bbee.featuredemo"
     compileSdk {
@@ -52,6 +58,14 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+    }
+    signingConfigs {
+        getByName("debug") {
+            storeFile = rootProject.file(localProps.getProperty("KEYSTORE_PATH"))
+            storePassword = localProps.getProperty("KEYSTORE_PASSWORD")
+            keyAlias = localProps.getProperty("KEY_ALIAS")
+            keyPassword = localProps.getProperty("KEY_PASSWORD")
         }
     }
     compileOptions {
