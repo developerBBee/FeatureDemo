@@ -40,6 +40,7 @@ fun HomeScreen(
     onFaceDetectionDemoClick: () -> Unit,
     onNotificationDemoClick: () -> Unit,
     onDailyRoutesMapDemoClick: () -> Unit,
+    onImageConversionDemoClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -98,9 +99,17 @@ fun HomeScreen(
             onClick = dropUnlessResumed(block = onDailyRoutesMapDemoClick),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
+                .padding(start = 16.dp, top = 8.dp, end = 16.dp),
         ) {
             Text("日毎の移動経路デモ")
+        }
+        Button(
+            onClick = dropUnlessResumed(block = onImageConversionDemoClick),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
+        ) {
+            Text("画像形式変換デモ")
         }
         LazyColumn(modifier = Modifier.fillMaxWidth()) {
             items(items) { item ->
