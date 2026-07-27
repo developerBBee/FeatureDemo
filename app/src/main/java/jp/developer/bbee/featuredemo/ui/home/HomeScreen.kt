@@ -26,7 +26,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor() : ViewModel() {
-
     private val _items = MutableStateFlow((1..20).map { "Item $it" })
     val items: StateFlow<List<String>> = _items.asStateFlow()
 }
@@ -40,6 +39,7 @@ fun HomeScreen(
     onTextScannerDemoClick: () -> Unit,
     onFaceDetectionDemoClick: () -> Unit,
     onNotificationDemoClick: () -> Unit,
+    onDailyRoutesMapDemoClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -90,9 +90,17 @@ fun HomeScreen(
             onClick = dropUnlessResumed(block = onNotificationDemoClick),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
+                .padding(start = 16.dp, top = 8.dp, end = 16.dp),
         ) {
             Text("通知デモ")
+        }
+        Button(
+            onClick = dropUnlessResumed(block = onDailyRoutesMapDemoClick),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
+        ) {
+            Text("日毎の移動経路デモ")
         }
         LazyColumn(modifier = Modifier.fillMaxWidth()) {
             items(items) { item ->
