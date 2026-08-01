@@ -35,3 +35,8 @@ data object DailyRoutesMapRoute : NavKey
 
 @Serializable
 data object ImageConversionRoute : NavKey
+
+// デバッグビルドでのみ到達する画面。ルート定義自体は rememberNavBackStack の
+// シリアライズ対象として main に置き、画面の実装は src/debug 側で差し替える
+@Serializable
+data object DebugRoute : NavKey

@@ -21,6 +21,7 @@ mlkitBarcodeScanning = "17.3.0"
 mlkitTextRecognition = "16.0.1"
 mlkitFaceDetection = "16.1.7"
 room = "2.7.1"
+datastore = "1.1.7"
 playServicesLocation = "21.3.0"
 mapsCompose = "6.4.4"
 
@@ -59,6 +60,7 @@ mlkit-face-detection = { group = "com.google.mlkit", name = "face-detection", ve
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 maps-compose = { group = "com.google.maps.android", name = "maps-compose", version.ref = "mapsCompose" }
 

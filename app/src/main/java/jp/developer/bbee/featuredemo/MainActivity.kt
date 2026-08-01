@@ -20,8 +20,10 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import dagger.hilt.android.AndroidEntryPoint
+import jp.developer.bbee.featuredemo.debug.DebugFeature
 import jp.developer.bbee.featuredemo.navigation.AuthenticatedRoute
 import jp.developer.bbee.featuredemo.navigation.BiometricAuthRoute
+import jp.developer.bbee.featuredemo.navigation.DebugRoute
 import jp.developer.bbee.featuredemo.navigation.DetailRoute
 import jp.developer.bbee.featuredemo.navigation.HomeRoute
 import jp.developer.bbee.featuredemo.navigation.BarcodeScannerRoute
@@ -44,11 +46,15 @@ import jp.developer.bbee.featuredemo.ui.imageconversion.ImageConversionScreen
 import jp.developer.bbee.featuredemo.ui.notification.NotificationDemoScreen
 import jp.developer.bbee.featuredemo.ui.textscanner.TextScannerScreen
 import jp.developer.bbee.featuredemo.ui.theme.FeatureDemoTheme
+import javax.inject.Inject
 
 // BiometricPrompt(androidx.biometric 安定版)が FragmentActivity を要求するため
 // ComponentActivity ではなく FragmentActivity を継承する
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() {
+
+    // ビルドバリアントごとに実装が差し替わる(release では何もしない実装が注入される)
+    @Inject lateinit var debugFeature: DebugFeature
 
     // 通知タップで開く画面を表す state。onNewIntent で更新し、Compose 側で消費する。
     // 同じ画面を再タップしても再発火させるため、消費後に null へ戻す前提で扱う。
@@ -63,6 +69,7 @@ class MainActivity : FragmentActivity() {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     AppNavDisplay(
                         pendingDestination = pendingDestination,
+                        debugFeature = debugFeature,
                         modifier = Modifier.padding(innerPadding),
                     )
                 }
@@ -80,17 +87,27 @@ class MainActivity : FragmentActivity() {
 @Composable
 private fun AppNavDisplay(
     pendingDestination: MutableState<String?>,
+    debugFeature: DebugFeature,
     modifier: Modifier = Modifier,
 ) {
     val backStack = rememberNavBackStack(HomeRoute)
     val destination by pendingDestination
 
+    // デバッグビルドでは常駐通知サービスを起動する(release では何も起きない)
+    debugFeature.DebugStartupEffect()
+
     // 通知からの遷移指示を処理する。処理後に null へ戻すことで再タップにも反応する。
     LaunchedEffect(destination) {
-        if (destination == NotificationHelper.DESTINATION_NOTIFICATION &&
-            backStack.lastOrNull() != NotificationRoute
-        ) {
-            backStack.add(NotificationRoute)
+        when (destination) {
+            NotificationHelper.DESTINATION_NOTIFICATION ->
+                if (backStack.lastOrNull() != NotificationRoute) {
+                    backStack.add(NotificationRoute)
+                }
+
+            NotificationHelper.DESTINATION_DEBUG ->
+                if (debugFeature.isEnabled && backStack.lastOrNull() != DebugRoute) {
+                    backStack.add(DebugRoute)
+                }
         }
         if (destination != null) {
             pendingDestination.value = null
@@ -165,6 +182,11 @@ private fun AppNavDisplay(
             }
             entry<ImageConversionRoute> {
                 ImageConversionScreen()
+            }
+            entry<DebugRoute> {
+                debugFeature.DebugScreen(
+                    onBack = { backStack.removeLastOrNull() },
+                )
             }
         },
     )

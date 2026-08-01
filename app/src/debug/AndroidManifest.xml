@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- デバッグビルド専用のマニフェスト。release APK には一切マージされない -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
+    <application>
+
+        <!-- デバッグ画面へ遷移する常駐通知を出すフォアグラウンドサービス。
+             位置情報などの既定タイプに当てはまらないため specialUse を使う -->
+        <service
+            android:name=".debug.DebugNotificationService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="debug_tools_notification" />
+        </service>
+    </application>
+
+</manifest>
