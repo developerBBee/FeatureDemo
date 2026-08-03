@@ -68,14 +68,13 @@ class DebugViewModel @Inject constructor(
     fun refresh() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            val dataStores = readDataStores()
-            val state = withContext(Dispatchers.IO) {
-                runCatching { readDatabase() }.fold(
-                    onSuccess = { it },
-                    onFailure = { e -> DebugUiState(error = e.toString()) },
-                )
+            // 読み出しも整形・ソートもすべて IO スレッドで行い、メインスレッドを止めない
+            _uiState.value = withContext(Dispatchers.IO) {
+                val dataStores = readDataStores()
+                val databaseState = runCatching { readDatabase() }
+                    .getOrElse { e -> DebugUiState(error = e.toString()) }
+                databaseState.copy(isLoading = false, dataStores = dataStores)
             }
-            _uiState.value = state.copy(isLoading = false, dataStores = dataStores)
         }
     }
 
