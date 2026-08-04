@@ -37,6 +37,34 @@ screen navigation and Hilt for dependency injection.
 - Screen-level composables live under `ui/<feature>/` alongside their ViewModel.
 - `FeatureDemoApplication` is the `@HiltAndroidApp` entry point (registered in the manifest).
 
+## Debug-only features (debug/release source sets)
+
+- Debug-only code lives in `app/src/debug/` and never reaches the release APK. `app/src/main/`
+  only holds the `debug/DebugFeature.kt` interface; `src/debug` binds `DebugFeatureImpl`
+  and `src/release` binds the no-op `ReleaseDebugFeature` (each source set has its own
+  `DebugFeatureModule`, so exactly one is compiled per variant).
+- `DebugFeature` exposes two composables — `DebugStartupEffect()` (starts the always-on
+  notification) and `DebugScreen(onBack)` — both called from `MainActivity`'s `AppNavDisplay`.
+  `DebugRoute` itself is declared in `navigation/AppRoute.kt` because `rememberNavBackStack`
+  must be able to serialize every key.
+- `DebugNotificationService` (debug source set, declared in `app/src/debug/AndroidManifest.xml`
+  with `foregroundServiceType="specialUse"`) posts an ongoing notification whose content intent
+  carries `NotificationHelper.EXTRA_DESTINATION = DESTINATION_DEBUG`, which `MainActivity`
+  turns into a `DebugRoute` push.
+- The debug screen dumps every Room table generically (`sqlite_master` → `SELECT *`, capped at
+  100 rows per table), so new entities show up without changes.
+
+## DataStore
+
+- Preferences DataStore instances are created only in `data/datastore/DataStoreModule.kt`.
+  Creating a second instance for the same file throws at runtime, so always inject the
+  existing instance instead of calling `PreferenceDataStoreFactory` elsewhere.
+- Every store is also registered into a `Map<String, DataStore<Preferences>>` multibinding
+  (`@IntoMap @StringKey(<file name>)`), which is what the debug screen reads to list all
+  stores. When adding a DataStore, add its `@IntoMap` provider too.
+- `AppSettingsDataStore` (launch count / last launch time, written from
+  `FeatureDemoApplication`) is the current store.
+
 ## Common commands
 
 Run all commands from the project root using the Gradle wrapper.
@@ -66,5 +94,8 @@ Run all commands from the project root using the Gradle wrapper.
 - `app/src/main/java/jp/developer/bbee/featuredemo/` — app source
   - `MainActivity.kt` — single entry-point activity, sets Compose content via `setContent`
   - `ui/theme/` — Compose theme (`Color.kt`, `Theme.kt`, `Type.kt`)
+- `app/src/debug/` — debug-only sources (debug screen, always-on notification service) and the
+  manifest that declares them
+- `app/src/release/` — no-op replacements for the debug-only entry points
 - `app/src/test/` — local JUnit unit tests
 - `app/src/androidTest/` — instrumented tests (Espresso/Compose UI test)

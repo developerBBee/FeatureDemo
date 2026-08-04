@@ -32,6 +32,9 @@ object NotificationHelper {
     const val EXTRA_DESTINATION = "extra_destination"
     const val DESTINATION_NOTIFICATION = "notification_demo"
 
+    // デバッグビルドの常駐通知から、デバッグ画面を開くために使う
+    const val DESTINATION_DEBUG = "debug_menu"
+
     // 選択肢アクションを受け取るためのブロードキャスト定義
     const val ACTION_UPDATE_STATUS = "jp.developer.bbee.featuredemo.action.UPDATE_STATUS"
     const val EXTRA_STATUS = "extra_status"
